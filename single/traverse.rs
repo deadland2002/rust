@@ -129,12 +129,12 @@ fn push_uncommitted_changes(path: &Path,branch_name: &str) -> bool {
 
 
 
-fn reset_uncommitted_changes(path: &Path,branch_name: &str) -> bool {
+fn reset_uncommitted_changes(path: &Path) -> bool {
     let mut command = Command::new("git");
     command.args(&["reset","--soft","HEAD^"]).current_dir(path).stdout(Stdio::piped()).stderr(Stdio::piped());
 
     if let Ok(child) = command.spawn() {
-        let output = child.wait_with_output().expect("Failed to wait for git push process");
+        let output = child.wait_with_output().expect("Failed to wait for git reset process");
 
         if output.status.success() {
             // let stdout_str = String::from_utf8(output.stdout).unwrap();
@@ -142,10 +142,10 @@ fn reset_uncommitted_changes(path: &Path,branch_name: &str) -> bool {
             return true;
         } else {
             let stderr_str = String::from_utf8(output.stderr).unwrap();
-            println!("Error message from 'git push' command: {}", stderr_str);
+            println!("Error message from 'git reset' command: {}", stderr_str);
         }
     } else {
-        println!("Failed to execute 'git push' command");
+        println!("Failed to execute 'git reset' command");
     }
 
     false
@@ -248,6 +248,28 @@ fn traverse_directory(path: &Path, skip_arr: &[&str], found_paths: &mut Vec<Path
     }
 }
 
+
+
+
+
+fn format_seconds_since_epoch(seconds: u64) -> String {
+    let (secs, mins, hrs, days) = (
+        seconds % 60,
+        (seconds / 60) % 60,
+        (seconds / 3600) % 24,
+        seconds / 86400,
+    );
+
+    format!(
+        "auto commit at {} days, {} hours, {} minutes, {} seconds since the Unix epoch",
+        days, hrs, mins, secs
+    )
+}
+
+
+
+
+
 fn main() {
     let root_path = Path::new("C:\\Users\\satvi\\Documents\\Repos");
     let skip_arr = ["node_modules", "env", ".idea", "temp"];
@@ -270,7 +292,8 @@ fn main() {
                     let now = SystemTime::now();
                     let duration_since_epoch = now.duration_since(UNIX_EPOCH).expect("Time went backwards");
                     let seconds = duration_since_epoch.as_secs();
-                    let formatted_string = format!("auto commit at {}", seconds);
+
+                    let formatted_string = format_seconds_since_epoch(seconds);
                     let branch_name = format!("temp_branch_{}", seconds);
 
                     let mut success = false;
@@ -290,9 +313,11 @@ fn main() {
 
                     if !success{
                         println!("removing branch");
-                        if master_branch_uncommitted_changes(path){
-                            if remove_branch_uncommitted_changes(path,&branch_name){
-                                println!("removed branch");
+                        if reset_uncommitted_changes(path){
+                            if master_branch_uncommitted_changes(path){
+                                if remove_branch_uncommitted_changes(path,&branch_name){
+                                    println!("removed branch");
+                                }
                             }
                         }
                     }
@@ -301,3 +326,4 @@ fn main() {
         }
     }
 }
+
