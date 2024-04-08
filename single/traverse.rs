@@ -102,9 +102,9 @@ fn commit_uncommitted_changes(path: &Path, message: &str) -> bool {
     !stdout_str.trim().is_empty()
 }
 
-fn push_uncommitted_changes(path: &Path) -> bool {
+fn push_uncommitted_changes(path: &Path,branch_name: &str) -> bool {
     let mut command = Command::new("git");
-    command.args(&["push"]).current_dir(path).stdout(Stdio::piped()).stderr(Stdio::piped());
+    command.args(&["push","--set-upstream origin",branch_name]).current_dir(path).stdout(Stdio::piped()).stderr(Stdio::piped());
 
     if let Ok(child) = command.spawn() {
         let output = child.wait_with_output().expect("Failed to wait for git push process");
@@ -119,6 +119,84 @@ fn push_uncommitted_changes(path: &Path) -> bool {
         }
     } else {
         println!("Failed to execute 'git push' command");
+    }
+
+    false
+}
+
+
+
+
+
+
+fn branch_uncommitted_changes(path: &Path,message: &str) -> bool {
+    let mut command = Command::new("git");
+    command.args(&["checkout","-b",message]).current_dir(path).stdout(Stdio::piped()).stderr(Stdio::piped());
+
+    if let Ok(child) = command.spawn() {
+        let output = child.wait_with_output().expect("Failed to wait for git branch process");
+
+        if output.status.success() {
+            // let stdout_str = String::from_utf8(output.stdout).unwrap();
+            // println!("Output : {}", stdout_str);
+            return true;
+        } else {
+            let stderr_str = String::from_utf8(output.stderr).unwrap();
+            println!("Error message from 'git checkout' command: {}", stderr_str);
+        }
+    } else {
+        println!("Failed to execute 'git checkout' command");
+    }
+
+    false
+}
+
+
+
+
+
+
+fn master_branch_uncommitted_changes(path: &Path) -> bool {
+    let mut command = Command::new("git");
+    command.args(&["checkout","master"]).current_dir(path).stdout(Stdio::piped()).stderr(Stdio::piped());
+
+    if let Ok(child) = command.spawn() {
+        let output = child.wait_with_output().expect("Failed to wait for git branch master process");
+
+        if output.status.success() {
+            // let stdout_str = String::from_utf8(output.stdout).unwrap();
+            // println!("Output : {}", stdout_str);
+            return true;
+        } else {
+            let stderr_str = String::from_utf8(output.stderr).unwrap();
+            println!("Error message from 'git checkout master' command: {}", stderr_str);
+        }
+    } else {
+        println!("Failed to execute 'git checkout master' command");
+    }
+
+    false
+}
+
+
+
+fn remove_branch_uncommitted_changes(path: &Path,message: &str) -> bool {
+    let mut command = Command::new("git");
+    command.args(&["branch","-D",message]).current_dir(path).stdout(Stdio::piped()).stderr(Stdio::piped());
+
+    if let Ok(child) = command.spawn() {
+        let output = child.wait_with_output().expect("Failed to wait for git branch process");
+
+        if output.status.success() {
+            // let stdout_str = String::from_utf8(output.stdout).unwrap();
+            // println!("Output : {}", stdout_str);
+            return true;
+        } else {
+            let stderr_str = String::from_utf8(output.stderr).unwrap();
+            println!("Error message from 'git checkout' command: {}", stderr_str);
+        }
+    } else {
+        println!("Failed to execute 'git checkout' command");
     }
 
     false
@@ -166,12 +244,29 @@ fn main() {
                     let duration_since_epoch = now.duration_since(UNIX_EPOCH).expect("Time went backwards");
                     let seconds = duration_since_epoch.as_secs();
                     let formatted_string = format!("auto commit at {}", seconds);
-                    if commit_uncommitted_changes(path, &formatted_string) {
-                        println!("Changes committed successfully.");
-                        if push_uncommitted_changes(path) {
-                            println!("Changes pushed successfully.");
-                        }else{
-                            println!("Changes not pushed.");
+                    let branch_name = format!("temp_branch_{}", seconds);
+
+                    let mut success = false;
+
+                    if branch_uncommitted_changes(path, &branch_name){
+                        println!("Switched branch successfully.");
+                        if commit_uncommitted_changes(path, &formatted_string) {
+                            println!("Changes committed successfully.");
+                            if push_uncommitted_changes(path,&branch_name) {
+                                println!("Changes pushed successfully.");
+                                success = true;
+                            }else{
+                                println!("Changes not pushed.");
+                            }
+                        }
+                    }
+
+                    if !success{
+                        println!("removing branch");
+                        if master_branch_uncommitted_changes(path){
+                            if remove_branch_uncommitted_changes(path,&branch_name){
+                                println!("removed branch");
+                            }
                         }
                     }
                 }
