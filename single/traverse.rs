@@ -115,6 +115,7 @@ fn push_uncommitted_changes(path: &Path) -> bool {
     let stdout_str = match String::from_utf8(output.stdout) {
         Ok(s) => s,
         Err(_) => return false,
+
     };
 
     !stdout_str.trim().is_empty()
