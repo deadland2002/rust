@@ -167,6 +167,8 @@ fn main() {
                         println!("Changes committed successfully.");
                         if push_uncommitted_changes(path) {
                             println!("Changes pushed successfully.");
+                        }else{
+                            println!("Changes not pushed.");
                         }
                     }
                 }
