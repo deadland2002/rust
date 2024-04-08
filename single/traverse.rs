@@ -43,7 +43,7 @@ fn add_uncommitted_changes(path: &Path) -> bool {
         .output()
     {
         Ok(output) => {
-            println!("Output : {:?}", output.stdout);
+            // println!("Output : {:?}", output.stdout);
             output
         },
         Err(e) => {
@@ -81,7 +81,7 @@ fn commit_uncommitted_changes(path: &Path, message: &str) -> bool {
         .output()
     {
         Ok(output) => {
-            println!("Output : {:?}", output.stdout);
+            // println!("Output : {:?}", output.stdout);
             output
         },
         Err(e) => {
@@ -110,8 +110,8 @@ fn push_uncommitted_changes(path: &Path) -> bool {
         let output = child.wait_with_output().expect("Failed to wait for git push process");
 
         if output.status.success() {
-            let stdout_str = String::from_utf8(output.stdout).unwrap();
-            println!("Output : {}", stdout_str);
+            // let stdout_str = String::from_utf8(output.stdout).unwrap();
+            // println!("Output : {}", stdout_str);
             return true;
         } else {
             let stderr_str = String::from_utf8(output.stderr).unwrap();
