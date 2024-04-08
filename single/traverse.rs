@@ -80,8 +80,14 @@ fn commit_uncommitted_changes(path: &Path, message: &str) -> bool {
         .stderr(Stdio::null())
         .output()
     {
-        Ok(output) => output,
-        Err(_) => return false,
+        Ok(output) => {
+            println!("Output : {:?}", output.stdout);
+            output
+        },
+        Err(e) => {
+            println!("Failed to execute 'git add' command: {}", e);
+            return false
+        }
     };
 
     if !output.status.success() {
@@ -104,8 +110,14 @@ fn push_uncommitted_changes(path: &Path) -> bool {
         .stderr(Stdio::null())
         .output()
     {
-        Ok(output) => output,
-        Err(_) => return false,
+        Ok(output) => {
+            println!("Output : {:?}", output.stdout);
+            output
+        },
+        Err(e) => {
+            println!("Failed to execute 'git add' command: {}", e);
+            return false
+        }
     };
 
     if !output.status.success() {
