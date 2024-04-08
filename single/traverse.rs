@@ -104,7 +104,34 @@ fn commit_uncommitted_changes(path: &Path, message: &str) -> bool {
 
 fn push_uncommitted_changes(path: &Path,branch_name: &str) -> bool {
     let mut command = Command::new("git");
-    command.args(&["push","--set-upstream origin",branch_name]).current_dir(path).stdout(Stdio::piped()).stderr(Stdio::piped());
+    command.args(&["push","--set-upstream","origin",branch_name]).current_dir(path).stdout(Stdio::piped()).stderr(Stdio::piped());
+
+    if let Ok(child) = command.spawn() {
+        let output = child.wait_with_output().expect("Failed to wait for git push process");
+
+        if output.status.success() {
+            // let stdout_str = String::from_utf8(output.stdout).unwrap();
+            // println!("Output : {}", stdout_str);
+            return true;
+        } else {
+            let stderr_str = String::from_utf8(output.stderr).unwrap();
+            println!("Error message from 'git push' command: {}", stderr_str);
+        }
+    } else {
+        println!("Failed to execute 'git push' command");
+    }
+
+    false
+}
+
+
+
+
+
+
+fn reset_uncommitted_changes(path: &Path,branch_name: &str) -> bool {
+    let mut command = Command::new("git");
+    command.args(&["reset","--soft","HEAD^"]).current_dir(path).stdout(Stdio::piped()).stderr(Stdio::piped());
 
     if let Ok(child) = command.spawn() {
         let output = child.wait_with_output().expect("Failed to wait for git push process");
